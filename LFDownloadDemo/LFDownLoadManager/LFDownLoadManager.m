@@ -302,11 +302,14 @@
     LFDownLoadModel *model = [[LFDownLoadDatabaseManager shareManager] getModelWithUrl:downloadTask.taskDescription];
     NSError*error = nil;
     //location    NSURL *    @"file:///Users/wanglufei/Library/Developer/CoreSimulator/Devices/EE58BB00-B9B5-4286-BAC7-D3AB0B3167D1/data/Containers/Data/Application/9F99D667-E002-4A23-81FE-D0FA43B4C0A2/Library/Caches/com.apple.nsurlsessiond/Downloads/cn.gr.LFDownloadDemo/CFNetworkDownload_Y0yyNr.tmp"    0x00006000029dcfc0
-    [[NSFileManager defaultManager] moveItemAtPath:location.path toPath:[[LFUtil downloadPathDirectory] stringByAppendingPathComponent:model.localPath ] error:&error];
-    [[NSNotificationCenter defaultCenter] postNotificationName:LFDownloadStateChangeNotification object:model];
     [[LFDownLoadDatabaseManager shareManager] transactionWithBlock:^{
         model.state = LFDownloadStateFinish;
     }];
+    LFDownLoadModel *threadModel = [[LFDownLoadModel alloc]initWith:model];
+    [[NSFileManager defaultManager] moveItemAtPath:location.path toPath:[[LFUtil downloadPathDirectory] stringByAppendingPathComponent:model.localPath ] error:&error];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [[NSNotificationCenter defaultCenter] postNotificationName:LFDownloadStateChangeNotification object:threadModel];
+    });
     
 }
 #pragma mark - NSURLSessionTaskDelegate
